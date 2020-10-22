@@ -15,3 +15,21 @@
     ```sh
     python nodes/master/app.py
     ```
+5. Start client:
+    * Make sure you already installed all dependencies
+
+        ```sh
+        pip install nodes/client/requirements.txt
+        ```
+
+    * Set `FLASK_APP`
+
+        ```sh
+        export FLASK_APP=nodes/client/app.py
+        ```
+
+    * Run
+
+        ```sh
+        flask run
+        ```
