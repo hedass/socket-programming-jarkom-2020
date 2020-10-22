@@ -19,7 +19,7 @@
     * Make sure you already installed all dependencies
 
         ```sh
-        pip install nodes/client/requirements.txt
+        pip install -r nodes/client/requirements.txt
         ```
 
     * Set `FLASK_APP`
