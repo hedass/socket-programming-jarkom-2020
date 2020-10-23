@@ -19,7 +19,8 @@ class ExecutorThread(Thread):
 
                 if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.EXEC_FLAG:
                     # TODO receive then compile data
-                else if(c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.REQUEST_CANCEL):
+                    pass
+                elif (c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.REQUEST_CANCEL):
                     cancel_flag = c_conn.recv(1).decode()
                     if(cancel_flag):
                         # TODO abort process

@@ -28,7 +28,7 @@ class AvailThread(Thread):
                 if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.GET_AVAIL:
                     c_conn.sendall((utils.TOKEN + utils.GET_AVAIl + get_avail()).encode())
                 
-                else if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.UPDATE_AVAIL:
+                elif c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.UPDATE_AVAIL:
                     new_status = c_conn.recv(1).decode()
                     set_avail(new_status)
 
@@ -36,7 +36,8 @@ class AvailThread(Thread):
                     c_conn.sendall("FATAL : Authentication Error".encode())
 
 def set_avail(number=1):
-    global AVAIL_NOW = Avail(number)
+    global AVAIL_NOW
+    AVAIL_NOW = Avail(number)
 
 def get_avail():
     return AVAIL_NOW
