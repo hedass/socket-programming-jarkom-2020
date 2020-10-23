@@ -30,7 +30,6 @@ class Executor(Thread):
             while 1:
                 temp_data = self.conn.recv(1024)
                 if not temp_data:
-                    print(temp_data)
                     break
                 self.data += temp_data.decode()
             print(f'message : {self.data}')
@@ -41,6 +40,7 @@ class Executor(Thread):
 STATE_NOW = State(1)
 
 def callback_after_executed():
+    global STATE_NOW
     STATE_NOW = State(1)
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
