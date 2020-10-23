@@ -15,7 +15,7 @@ class ExecutorThread(Thread):
             self.conn.listen(1)
             while True:
                 c_conn, c_addr = self.conn.accept()
-                c_input = c.conn.recv(utils.BUFF_SIZE).decode()
+                c_input = c_conn.recv(utils.BUFF_SIZE).decode()
 
                 if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.EXEC_FLAG:
                     # TODO receive then compile data
