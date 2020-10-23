@@ -1,16 +1,65 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>Slave Compilator</title>
-  </head>
+
+<head>
+  <title>Slave Compilator</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/codemirror.min.css"
+    integrity="sha512-xIf9AdJauwKIVtrVRZ0i4nHP61Ogx9fSRAkCLecmE2dL/U8ioWpDvFCAy4dcfecN72HHB9+7FfQj3aiO68aaaw=="
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/theme/dracula.min.css"
+    integrity="sha512-gFMl3u9d0xt3WR8ZeW05MWm3yZ+ZfgsBVXLSOiFz2xeVrZ8Neg0+V1kkRIo9LikyA/T9HuS91kDfc2XWse0K0A=="
+    crossorigin="anonymous" />
+</head>
 <body>
 
-<h2>Slave Compilator</h2>
-
-<form method="post" enctype="multipart/form-data">
-  <label for="code">Code:</label><br>
-  <input type="text" id="code" name="code"><br>
-  <input type="submit" value="Submit">
-</form> 
+  <h2>Slave Compilator</h2>
+  <form method="post" enctype="multipart/form-data">
+    <label for="code">Code:</label><br>
+    <label for="language">change language</label>
+    <select name="language" id="language" onchange="changeMode(this.value)">
+      <option value="python">python</option>
+      <option value="text/x-java">java</option>
+    </select>
+    <textarea id="code" name="code"></textarea>
+    <br>
+    worker id: 1
+    <br>
+    <div class="dropdown">
+      <input type="submit" value="Submit">
+    </div>
+  </form>
+  <form method="post" enctype="multipart/form-data">
+    <input type="submit" value="Cancel">
+  </form>
+  {% if output %}
+  <h4>Output:</h4>
+  <textarea>{{ output }}</textarea>
+  {% endif %}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/codemirror.min.js"
+    integrity="sha512-WWC1A/JchDFZ2ZGaNyMC7CmPFXGLI/6Ih7WN6YG0DX1NGMkW5lqCVFxCmEx3e56Z7iqdQGpO0f+m2t9CJhdb2Q=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/mode/python/python.min.js"
+    integrity="sha512-DS+asaww1mE0V/N6YGVgoNIRj+yXB9hAV68vM6rVeWs0G+OyMd24LKrnS4Z+g26rgghU7qvGeEnRVUArV7nVog=="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/mode/clike/clike.min.js"
+    integrity="sha512-HT3t3u7HfQ7USbSZa0Tk5caEnUfO8s58OWqMBwm96xaZAbA17rpnXXHDefR8ixVmSSVssbOv3W3OMh6mNX/XuQ=="
+    crossorigin="anonymous"></script>
+  <script>
+    var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
+      lineNumbers: true,
+      textWrapping: true,
+      theme: 'dracula',
+      mode: 'python',
+      matchBrackets: true,
+    });
+    function changeMode(lang) {
+      editor.setOption('mode', lang);
+    }
+    editor.setSize(null, 700);
+  </script>
 </body>
+
 </html>
