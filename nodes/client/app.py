@@ -6,7 +6,11 @@ app.debug = True
 @app.route('/', methods=['GET', 'POST'])
 def hello_world():
     if request.method == 'POST':
-        kodingan = request.form.get('code')
+        code = request.form.get('code').replace('\r\n', '\n')
+        language = request.form.get('language')
+
+        print(code.encode())
+        print(language)
 
     return render_template('index.html')
 
