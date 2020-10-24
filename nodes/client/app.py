@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from utils import EXEC_FLAG, MASTER_SOCK, TOKEN, EOF
+from utils import EXEC_FLAG, MASTER_SOCK, TOKEN, EOF, LANGUAGE
 
 import io
 import socket
@@ -8,7 +8,7 @@ app = Flask(__name__)
 app.debug = True
 
 def kirim_master(code, lang):
-    data = io.BytesIO(code.encode())
+    data = io.BytesIO((str(lang) + code).encode())
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(MASTER_SOCK)
         s.send((TOKEN + EXEC_FLAG).encode())
@@ -18,7 +18,6 @@ def kirim_master(code, lang):
                 break
             s.send(chunk)
         s.send(EOF.encode())
-        s.shutdown(socket.SHUT_WR)
         output = ''
         while 1:
             reply = s.recv(1024).decode()
@@ -32,7 +31,6 @@ def _cancel():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(MASTER_SOCK)
         s.send(1)
-        s.shutdown(socket.SHUT_WR)
 
         output = s.recv(1024).decode()
         return output
@@ -42,6 +40,9 @@ def index():
     if request.method == 'POST':
         code = request.form.get('code').replace('\r\n', '\n')
         language = request.form.get('language')
+        if (language not in LANGUAGE):
+            return render_template('index.html', code=code, language=language)
+        language = LANGUAGE[language]
         output = kirim_master(code, language)
         context = {
             'code': code,

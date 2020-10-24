@@ -4,7 +4,8 @@ MASTER_HOST = '127.0.0.1'
 WORKER_HOST = '0.0.0.0'
 MASTER_PORT = 6000
 WORKER_PORT = 7000
-MASTER_SOCK = (WORKER_HOST, MASTER_PORT)
+MASTER_SOCK = (MASTER_HOST, MASTER_PORT)
+WORKER_SOCK = (WORKER_HOST, WORKER_PORT)
 
 TOKEN = os.environ.get("TOKEN", "agA6D11")
 EOF   = '@%[>!eof!<]%@'
@@ -17,6 +18,14 @@ REQUEST_CANCEL  = "RC"
 GET_AVAIL       = "GA"
 EXEC_FLAG       = "EX"
 
+LANGUAGE = {
+    'python': 1,
+    'text/x-java': 2,
+}
+
+def send_data(sock, data, flag):
+    sock.sendall((TOKEN + flag).encode())
+    sock.sendall((data + EOF).encode())
 
 def receive_data(conn):
     data = ''
