@@ -14,7 +14,7 @@
 <body>
 
   <h2>Slave Compilator</h2>
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" id='form-code' enctype="multipart/form-data">
     <label for="code">Code:</label><br>
     <label for="language">change language</label>
     <select name="language" id="language" onchange="changeMode(this.value)">
@@ -34,6 +34,12 @@
     <textarea id="code" name="code">{{ code }}</textarea>
     <br>
     worker id: 1
+    <div>
+      worker status: 
+      <div style='display: inline;' id="worker-status">
+        available
+      </div>
+    </div>
     <br>
     <div class="dropdown">
       <input type="submit" value="Submit">
@@ -42,10 +48,12 @@
   <form method="post" enctype="multipart/form-data">
     <input type="submit" value="Cancel">
   </form>
-  {% if output %}
-  <h4>Output:</h4>
-  <textarea>{{ output }}</textarea>
-  {% endif %}
+  <div id='output'>
+    {% if output %}
+    <h4>Output:</h4>
+    <textarea>{{ output }}</textarea>
+    {% endif %}
+  </div>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
     integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
     crossorigin="anonymous"></script>
@@ -59,6 +67,7 @@
     integrity="sha512-HT3t3u7HfQ7USbSZa0Tk5caEnUfO8s58OWqMBwm96xaZAbA17rpnXXHDefR8ixVmSSVssbOv3W3OMh6mNX/XuQ=="
     crossorigin="anonymous"></script>
   <script>
+    var LANG = ['python', 'text/x-java']
     var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
       lineNumbers: true,
       textWrapping: true,
@@ -70,6 +79,38 @@
       editor.setOption('mode', lang);
     }
     editor.setSize(null, 700);
+    $('#form-code').submit(function(e){
+      e.preventDefault();
+      data = $('form').serializeArray();
+      json_data = {}
+      data.forEach(element => {
+        json_data[element.name] = element.value
+      });
+      console.log(json_data);
+      $('#worker-status').text('Running')
+      $.ajax({
+        type: 'POST',
+        url: '/',
+        data: JSON.stringify(json_data),
+        contentType: 'application/json;charset=UTF-8',
+        success: function(data) {
+          console.log(data);
+          $('#code').text(data.code);
+          editor.setOption('mode', LANG[data.language - 1]);
+          h4_node = $('<h4>');
+          h4_node.text("Output")
+          output_node = $('<textarea>');
+          output_node.text(data.output);
+          $('#output').empty();
+          $('#output').append(h4_node);
+          $('#output').append(output_node);
+          $("#worker-status").text('Finished')
+        },
+        error: function(err) {
+          console.log(err);
+        }
+      })
+    })
   </script>
 </body>
 

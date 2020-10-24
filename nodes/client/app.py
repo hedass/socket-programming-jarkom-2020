@@ -38,8 +38,9 @@ def _cancel():
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        code = request.form.get('code').replace('\r\n', '\n')
-        language = request.form.get('language')
+        data = request.get_json()
+        code = data.get('code').replace('\r\n', '\n')
+        language = data.get('language')
         if (language not in LANGUAGE):
             return render_template('index.html', code=code, language=language)
         language = LANGUAGE[language]
@@ -49,7 +50,8 @@ def index():
             'output': output,
             'language': language
         }
-        return render_template('index.html', **context)
+        return jsonify(context)
+        # return render_template('index.html', **context)
     return render_template('index.html')
 
 @app.route('/cancel', methods=['POST'])

@@ -6,6 +6,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(utils.MASTER_SOCK)
 
+STATUS = 1
 
 def handle_client(conn, addr):
     print('Connected by', addr)

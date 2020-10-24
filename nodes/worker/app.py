@@ -22,6 +22,7 @@ def handle_client(conn, addr):
         elif flag == utils.EXEC_FLAG:
             # cek semua worker apakah available
             code = utils.receive_data(conn)
+            sleep(5)
             conn.sendall(f"kodingan anda bagus {utils.EOF}".encode())
 
     conn.close()
