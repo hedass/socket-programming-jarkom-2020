@@ -41,7 +41,13 @@ def index():
         code = request.form.get('code').replace('\r\n', '\n')
         language = request.form.get('language')
         output = kirim_master(code, language)
-        return render_template('index.html', output=output)
+        output = "lol"
+        context = {
+            'code': code,
+            'output': output,
+            'language': language
+        }
+        return render_template('index.html', **context)
     return render_template('index.html')
 
 @app.route('/cancel', methods=['POST'])

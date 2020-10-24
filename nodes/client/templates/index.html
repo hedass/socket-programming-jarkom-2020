@@ -10,6 +10,7 @@
     integrity="sha512-gFMl3u9d0xt3WR8ZeW05MWm3yZ+ZfgsBVXLSOiFz2xeVrZ8Neg0+V1kkRIo9LikyA/T9HuS91kDfc2XWse0K0A=="
     crossorigin="anonymous" />
 </head>
+
 <body>
 
   <h2>Slave Compilator</h2>
@@ -17,10 +18,20 @@
     <label for="code">Code:</label><br>
     <label for="language">change language</label>
     <select name="language" id="language" onchange="changeMode(this.value)">
+      {% if language %}
+        {% if language == "python" %}
       <option value="python">python</option>
       <option value="text/x-java">java</option>
+        {% else %}
+      <option value="text/x-java">java</option>
+      <option value="python">python</option>
+        {% endif %}
+      {% else %}
+      <option value="python">python</option>
+      <option value="text/x-java">java</option>
+      {% endif %}
     </select>
-    <textarea id="code" name="code"></textarea>
+    <textarea id="code" name="code">{{ code }}</textarea>
     <br>
     worker id: 1
     <br>
@@ -52,7 +63,7 @@
       lineNumbers: true,
       textWrapping: true,
       theme: 'dracula',
-      mode: 'python',
+      mode: "{% if language %}{{ language }}{% else %}python{% endif %}",
       matchBrackets: true,
     });
     function changeMode(lang) {
