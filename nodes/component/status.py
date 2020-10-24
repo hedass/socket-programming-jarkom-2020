@@ -12,13 +12,8 @@ class Status(Enum):
 STATUS_NOW = Status(3)
 
 class StatusThread(Thread):
-    def __init__(self, conn, addr):
-        Thread.__init__(self)
-        self.conn = conn
-        self.addr = addr
-
     def run(self):
-        with self.conn:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             self.conn.bind(utils.STATUS_SOCK)
             self.conn.listen(1)
             while True:
@@ -26,7 +21,10 @@ class StatusThread(Thread):
                 c_input = c_conn.recv(utils.BUFF_SIZE).decode()
 
                 if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.GET_STATUS:
-                   c_conn.sendall((utils.TOKEN + utils.GET_STATUS + get_status()).encode())
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                        s.connect(WORKER_STATUS_SOCK)
+
+                    c_conn.sendall((utils.TOKEN + utils.GET_STATUS + get_status()).encode())
 
                 elif c_input[:-2] == utils.TOKEN and c_addr[1] == utils.UPDATE_STATUS:
                     new_status = c_conn.recv(1).decode()

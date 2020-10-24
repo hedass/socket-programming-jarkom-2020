@@ -8,22 +8,15 @@ class ExecutorThread(Thread):
         Thread.__init__(self)
         self.conn = conn
         self.addr = addr
+        self.code = ""
 
     def run(self):
         with self.conn:
-            self.conn.bind(utils.EXECUTOR_SOCK)
-            self.conn.listen(1)
             while True:
-                c_conn, c_addr = self.conn.accept()
-                c_input = c_conn.recv(utils.BUFF_SIZE).decode()
-
-                if c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.EXEC_FLAG:
-                    # TODO receive then compile data
-                    pass
-                elif (c_input[:-2] == utils.TOKEN and c_input[-2:] == utils.REQUEST_CANCEL):
-                    cancel_flag = c_conn.recv(1).decode()
-                    if(cancel_flag):
-                        # TODO abort process
-                        pass
-                else:
-                    c_conn.sendall("FATAL : Authentication Error".encode())
+                code = self.conn.recv(1024).decode()
+                if not code:
+                    break
+                self.code += code
+            # kalo worker execute kodingan
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s
