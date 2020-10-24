@@ -41,7 +41,6 @@ def index():
         code = request.form.get('code').replace('\r\n', '\n')
         language = request.form.get('language')
         output = kirim_master(code, language)
-        output = "lol"
         context = {
             'code': code,
             'output': output,
