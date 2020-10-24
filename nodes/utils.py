@@ -2,17 +2,12 @@ import os
 
 MASTER_HOST = '127.0.0.1'
 WORKER_HOST = '0.0.0.0'
-EXECUTOR_PORT   = 9090
-STATUS_PORT     = 9091
-AVAIL_PORT      = 9092
-CANCEL_PORT     = 9093
-
-EXECUTOR_SOCK   = (WORKER_HOST, EXECUTOR_PORT)
-STATUS_SOCK     = (WORKER_HOST, STATUS_PORT)
-AVAIL_SOCK      = (WORKER_HOST, AVAIL_PORT)
-CANCEL_SOCK     = (WORKER_HOST, CANCEL_PORT)
+MASTER_PORT = 6000
+WORKER_PORT = 7000
+MASTER_SOCK = (WORKER_HOST, MASTER_PORT)
 
 TOKEN = os.environ.get("TOKEN", "agA6D11")
+EOF   = '@%[>!eof!<]%@'
 
 BUFF_SIZE  = len(TOKEN)+2
 
@@ -22,3 +17,14 @@ REQUEST_CANCEL  = "RC"
 GET_AVAIL       = "GA"
 EXEC_FLAG       = "EX"
 
+
+def receive_data(conn):
+    data = ''
+    chunk = True
+    while chunk:
+        chunk = conn.recv(1024).decode()
+        if chunk:
+            data += chunk
+            if EOF in chunk:
+                chunk = None
+    return data[:-len(EOF)]

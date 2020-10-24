@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, jsonify
-from utils import EXECUTOR_SOCK, CANCEL_SOCK
+from utils import EXEC_FLAG, MASTER_SOCK, TOKEN, EOF
 
 import io
 import socket
@@ -8,18 +8,20 @@ app = Flask(__name__)
 app.debug = True
 
 def kirim_master(code, lang):
-    data = io.BytesIO(code)
+    data = io.BytesIO(code.encode())
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(EXECUTOR_SOCK)
+        s.connect(MASTER_SOCK)
+        s.send((TOKEN + EXEC_FLAG).encode())
         while 1:
             chunk = data.read(1024)
             if not chunk:
                 break
             s.send(chunk)
+        s.send(EOF.encode())
         s.shutdown(socket.SHUT_WR)
         output = ''
         while 1:
-            reply = s.recv(1024)
+            reply = s.recv(1024).decode()
             if not reply:
                 break
             output += reply
@@ -28,7 +30,7 @@ def kirim_master(code, lang):
 
 def _cancel():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(CANCEL_SOCK)
+        s.connect(MASTER_SOCK)
         s.send(1)
         s.shutdown(socket.SHUT_WR)
 
