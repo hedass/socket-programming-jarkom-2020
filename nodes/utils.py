@@ -1,4 +1,4 @@
-from os import environ
+import os
 
 MASTER_HOST = '127.0.0.1'
 WORKER_HOST = '0.0.0.0'
@@ -12,7 +12,7 @@ STATUS_SOCK     = (WORKER_HOST, STATUS_PORT)
 AVAIL_SOCK      = (WORKER_HOST, AVAIL_PORT)
 CANCEL_SOCK     = (WORKER_HOST, CANCEL_PORT)
 
-TOKEN = environ("TOKEN", "agA6D11")
+TOKEN = os.environ.get("TOKEN", "agA6D11")
 
 BUFF_SIZE  = len(TOKEN)+2
 
