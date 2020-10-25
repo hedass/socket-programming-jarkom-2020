@@ -28,18 +28,8 @@
     <label for="code">Code:</label><br>
     <label for="language">change language</label>
     <select name="language" id="language" onchange="changeMode(this.value)">
-      {% if language %}
-      {% if language == "python" %}
       <option value="python">python</option>
       <option value="text/x-java">java</option>
-      {% else %}
-      <option value="text/x-java">java</option>
-      <option value="python">python</option>
-      {% endif %}
-      {% else %}
-      <option value="python">python</option>
-      <option value="text/x-java">java</option>
-      {% endif %}
     </select>
     <div id="warning-java"></div>
     <textarea id="code" name="code">{{ code }}</textarea>
@@ -48,9 +38,11 @@
       <input type="submit" value="Submit">
     </div>
   </form>
-  <form method="post" action="/cancel" id="form-cancel" enctype="multipart/form-data">
-    <input type="submit" value="Cancel">
-  </form>
+  <div id="div-form-cancel">
+    <form method="post" action="/cancel" id="form-cancel" enctype="multipart/form-data">
+      <input type="submit" value="Cancel">
+    </form>
+  </div>
   <br>
   <span>Worker Availability</span>
   <table id='table-worker'>
