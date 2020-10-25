@@ -27,11 +27,6 @@
   <h2>Code Runner</h2>
   <form method="post" id='form-code' enctype="multipart/form-data">
     <label for="code">Code:</label><br>
-    <label for="language">change language</label>
-    <select name="language" id="language" onchange="changeMode(this.value)">
-      <option value="python">python</option>
-      <option value="text/x-java">java</option>
-    </select>
     <div id="warning-java"></div>
     <textarea id="code" name="code">{{ code }}</textarea>
   </form>
