@@ -49,7 +49,7 @@
     <input type="submit" value="Cancel">
   </form>
   <br>
-  <h4>Worker Availability</h4>
+  <span>Worker Availability</span>
   <table id='table-worker'>
     <tr>
       <th>worker id</th>
@@ -105,7 +105,6 @@
       data.forEach(element => {
         json_data[element.name] = element.value
       });
-      console.log(json_data);
       $('#worker-status').text('Running')
       $.ajax({
         type: 'POST',
@@ -113,13 +112,13 @@
         data: JSON.stringify(json_data),
         contentType: 'application/json;charset=UTF-8',
         success: function (data) {
-          console.log(data);
           $('#code').text(data.code);
           editor.setOption('mode', LANG[data.language - 1]);
           h4_node = $('<h4>');
           h4_node.text("Output")
           output_node = $('<textarea>');
-          output_node.text(data.output);
+          var output = JSON.parse(data.output)
+          output_node.text(output.stdout);
           $('#output').empty();
           $('#output').append(h4_node);
           $('#output').append(output_node);

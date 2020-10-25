@@ -1,8 +1,9 @@
 from flask import Flask, render_template, request, jsonify
 from flask import json
+from ast import literal_eval
+from json import dumps
 
 import utils
-import io
 import socket
 
 app = Flask(__name__)
@@ -11,8 +12,12 @@ app.debug = True
 def kirim_master(code, lang):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(utils.MASTER_SOCK)
-        utils.send_data(s, lang + code, utils.EXEC_FLAG)
+        utils.send_data(s, f"{lang}{code}", utils.EXEC_FLAG)
         output = utils.receive_data(s)
+        output = literal_eval(output)
+        output['stdout'] = output['stdout'].decode()
+        output['stderr'] = output['stderr'].decode()
+        output = dumps(output)
 
     return output
 
