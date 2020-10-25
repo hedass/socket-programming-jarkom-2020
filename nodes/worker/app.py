@@ -1,3 +1,4 @@
+from json import dumps
 import threading
 from collections import deque
 
@@ -10,14 +11,20 @@ jobs_output = dict()
 
 # deque is thread-safe
 jobs_queue = deque()
-
+IS_RUNNING = False
 
 def run_code(job_id, code):
-    global jobs_output
-    print(code)
+    global jobs_output, IS_RUNNING
+    IS_RUNNING = True
     jobs_output[job_id] = code_runner.run(
         code[1:].encode(),
         utils.LanguageCode.list()[int(code[0]) - 1])
+    jobs_output[job_id]['code'] = code[1:]
+    jobs_output[job_id]['language'] = int(code[0])
+    jobs_output[job_id]['stdout'] = jobs_output[job_id]['stdout'].decode()
+    jobs_output[job_id]['stderr'] = jobs_output[job_id]['stderr'].decode()
+    jobs_output[job_id] = dumps(jobs_output[job_id])
+    IS_RUNNING = False
 
 
 def handle_connection(conn, addr):
@@ -33,13 +40,11 @@ def handle_connection(conn, addr):
         if token != utils.TOKEN:
             utils.send(conn, "FATAL: Authentication Error")
 
-        elif flag == utils.Request.GET_JOB_STATUS:
-            # TODO
-            pass
-
         elif flag == utils.Request.GET_WORKER_STATUS:
-            # TODO
-            pass
+            if IS_RUNNING:
+                utils.send(conn, utils.WorkerStatus.RUNNING.value)
+            else:
+                utils.send(conn, utils.WorkerStatus.FREE.value)
 
         elif flag == utils.Request.EXECUTE_JOB:
             text = utils.receive_data(conn)
@@ -50,8 +55,11 @@ def handle_connection(conn, addr):
             jobs_queue.append(job_id)
 
         elif flag == utils.Request.GET_OUTPUT:
-            # TODO
-            pass
+            job_id = utils.receive_data(conn)
+            if (job_id in jobs_output):
+                utils.send(conn, jobs_output.get(job_id))
+            else:
+                utils.send(conn, "RUNNING")
 
     conn.close()
     print('Disconnected from', addr)

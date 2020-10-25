@@ -15,6 +15,7 @@
     td {
       border: 1px solid black;
     }
+
     p {
       margin-bottom: 0;
     }
@@ -33,16 +34,7 @@
     </select>
     <div id="warning-java"></div>
     <textarea id="code" name="code">{{ code }}</textarea>
-    <br>
-    <div class="dropdown">
-      <input type="submit" value="Submit">
-    </div>
   </form>
-  <div id="div-form-cancel">
-    <form method="post" action="/cancel" id="form-cancel" enctype="multipart/form-data">
-      <input type="submit" value="Cancel">
-    </form>
-  </div>
   <br>
   <div id='output'>
     {% if output %}
@@ -64,6 +56,7 @@
     crossorigin="anonymous"></script>
   <script>
     var LANG = ['python', 'text/x-java'];
+    var FLAG = false;
     var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
       lineNumbers: true,
       textWrapping: true,
@@ -81,31 +74,50 @@
       }
       editor.setOption('mode', lang);
     }
-    editor.setSize(null, 700);
-    $('#form-code').submit(function (e) {
-      e.preventDefault();
-      data = $('form').serializeArray();
-      json_data = {}
-      data.forEach(element => {
-        json_data[element.name] = element.value
-      });
-      $('#worker-status').text('Running')
-      $("#avail-1").text('BUSY');
-      $('#output').empty();
-      $("#warning-java").empty();
+    editor.setSize(null, 200);
+    function get_output() {
       $.ajax({
-        type: 'POST',
-        url: '/',
-        data: JSON.stringify(json_data),
-        contentType: 'application/json;charset=UTF-8',
+        method: 'GET',
+        url: '/output/{{ job_id }}.json',
         success: function (data) {
-          var url = "/output/" + data.job_id
+          data = JSON.parse(data)
+          $("#warning-java").empty()
+          if (data.message) {
+            $("#warning-java").text(data.message)
+            return
+          }
+          FLAG = true;
+          clearInterval(get_output);
+          editor.setValue(data.code);
+          editor.setOption('mode', LANG[data.language - 1]);
+
+          for (prop in data) {
+            if (prop === "code" || prop === "language") continue;
+              var temp_p = $('<p>');
+            temp_p.text(prop);
+
+            var temp_textarea = $('<textarea>');
+            temp_textarea.attr('rows', 10);
+            temp_textarea.attr('cols', 70);
+            temp_textarea.text(data[prop]);
+
+            $("#output").append(temp_p);
+            $("#output").append(temp_textarea);
+          }
         },
         error: function (err) {
           console.log(err);
         }
-      })
-    });
+      });
+    }
+    get_output();
+    var apa = setInterval(() => {
+      if (FLAG) {
+        clearInterval(apa);
+        return;
+      }
+      get_output();
+    }, 5000);
   </script>
 </body>
 

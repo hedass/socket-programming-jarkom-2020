@@ -1,7 +1,9 @@
+from json.decoder import JSONDecodeError
 import socket
 import threading
 import uuid
 from collections import deque
+import json
 
 import utils
 
@@ -35,11 +37,11 @@ def handle_connection(conn, addr):
             utils.send(conn, "FATAL: Authentication Error")
 
         elif flag == utils.Request.GET_JOB_STATUS:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(utils.WORKER_SOCK)
-                utils.send_flag(s, flag.value)
-                output = utils.receive_data(s)
-                utils.send(conn, output)
+            job_id = utils.receive_data(conn)
+            if job_id in jobs_output:
+                utils.send(conn, utils.JobStatus.FINISHED.value)
+            else:
+                utils.send(conn, utils.JobStatus.WAITING.value)
 
         elif flag == utils.Request.GET_WORKER_STATUS:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -55,10 +57,25 @@ def handle_connection(conn, addr):
                                       args=(job_id, code, flag))
             jobs[job_id] = thread
             jobs_queue.append(job_id)
+            utils.send(conn, job_id)
 
         elif flag == utils.Request.GET_OUTPUT:
-            # TODO
-            pass
+            job_id = utils.receive_data(conn)
+            if job_id in jobs_output:
+                utils.send(conn, jobs_output.get(job_id))
+            elif job_id not in jobs:
+                utils.send(conn, "FATAL: job id doesn't exist")
+            else: 
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                    s.connect(utils.WORKER_SOCK)
+                    utils.send_data(s, job_id, flag.value)
+                    output = utils.receive_data(s)
+                    try:
+                        json.loads(output)
+                        jobs_output[job_id] = output
+                    except JSONDecodeError as e:
+                        pass
+                    utils.send(conn, output)
 
     conn.close()
     print('Disconnected from', addr)

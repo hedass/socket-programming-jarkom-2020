@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nodes Availability</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/codemirror.min.css"
+    integrity="sha512-xIf9AdJauwKIVtrVRZ0i4nHP61Ogx9fSRAkCLecmE2dL/U8ioWpDvFCAy4dcfecN72HHB9+7FfQj3aiO68aaaw=="
+    crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/theme/dracula.min.css"
+    integrity="sha512-gFMl3u9d0xt3WR8ZeW05MWm3yZ+ZfgsBVXLSOiFz2xeVrZ8Neg0+V1kkRIo9LikyA/T9HuS91kDfc2XWse0K0A=="
+    crossorigin="anonymous" />
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+
+    p {
+      margin-bottom: 0;
+    }
+  </style>
+</head>
+
+<body>
+  <span>Worker Availability</span>
+  <table id='table-worker'>
+    <tr>
+      <th>worker id</th>
+      <th>availability</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>loading...</td>
+    </tr>
+  </table>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
+    crossorigin="anonymous"></script>
+  <script>
+    function get_avail() {
+      $.ajax({
+        type: "GET",
+        url: '/availability.json',
+        success: function (data) {
+          data = data.STATUS
+          var table_worker = $('#table-worker')
+          table_worker.empty()
+
+          var table_tr_1 = $('<tr>')
+          var header_1 = $('<th>')
+          header_1.text('worker id')
+
+          var header_2 = $('<th>')
+          header_2.text('availability')
+
+          table_tr_1.append(header_1)
+          table_tr_1.append(header_2)
+
+          var table_tr_2 = $('<tr>')
+          var header_2 = $('<th>')
+          header_2.text(1)
+
+          var header_4 = $('<th>')
+          header_4.attr('id', 'avail-1')
+          header_4.text(data)
+
+          table_tr_2.append(header_2)
+          table_tr_2.append(header_4)
+
+          table_worker.append(table_tr_1)
+          table_worker.append(table_tr_2)
+        },
+        error: function (err) {
+          console.log(err);
+        }
+      })
+    };
+    get_avail();
+    setInterval(get_avail, 5000);
+  </script>
+
+</body>
+
+</html>
