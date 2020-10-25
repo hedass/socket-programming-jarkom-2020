@@ -89,6 +89,7 @@
         contentType: 'application/json;charset=UTF-8',
         success: function (data) {
           var url = "/output/" + data.job_id
+          window.open(url);
         },
         error: function (err) {
           console.log(err);
