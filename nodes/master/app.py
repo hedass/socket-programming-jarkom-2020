@@ -24,23 +24,16 @@ def handle_client(conn, addr):
         elif flag == utils.GET_STATUS:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, "", flag)
+                utils.send_flag(s, flag)
                 output = utils.receive_data(s)
-                conn.send(output.encode())
+                utils.send(conn, output)
         
-        elif flag == utils.UPDATE_STATUS:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, "", flag)
-                output = utils.receive_data(s)
-                conn.send_data(output.encode())
-
         elif flag == utils.GET_AVAIL:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, "", flag)
-                output = utils.receive_data()
-                conn.send(output.encode())
+                utils.send_flag(s, flag)
+                output = utils.receive_data(s)
+                utils.send(conn, output)
 
         elif flag == utils.EXEC_FLAG:
             code = utils.receive_data(conn)
@@ -49,7 +42,7 @@ def handle_client(conn, addr):
                 s.connect(utils.WORKER_SOCK)
                 utils.send_data(s, code, flag)
                 output = utils.receive_data(s)
-                conn.sendall(output.encode())
+                utils.send(conn, output)
 
     conn.close()
     print('Disconnected from', addr)

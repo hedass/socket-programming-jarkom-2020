@@ -9,6 +9,13 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.58.1/theme/dracula.min.css"
     integrity="sha512-gFMl3u9d0xt3WR8ZeW05MWm3yZ+ZfgsBVXLSOiFz2xeVrZ8Neg0+V1kkRIo9LikyA/T9HuS91kDfc2XWse0K0A=="
     crossorigin="anonymous" />
+  <style>
+    table,
+    th,
+    td {
+      border: 1px solid black;
+    }
+  </style>
 </head>
 
 <body>
@@ -19,35 +26,40 @@
     <label for="language">change language</label>
     <select name="language" id="language" onchange="changeMode(this.value)">
       {% if language %}
-        {% if language == "python" %}
+      {% if language == "python" %}
       <option value="python">python</option>
       <option value="text/x-java">java</option>
-        {% else %}
+      {% else %}
       <option value="text/x-java">java</option>
       <option value="python">python</option>
-        {% endif %}
+      {% endif %}
       {% else %}
       <option value="python">python</option>
       <option value="text/x-java">java</option>
       {% endif %}
     </select>
+    <div id="warning-java"></div>
     <textarea id="code" name="code">{{ code }}</textarea>
-    <br>
-    worker id: 1
-    <div>
-      worker status: 
-      <div style='display: inline;' id="worker-status">
-        available
-      </div>
-    </div>
     <br>
     <div class="dropdown">
       <input type="submit" value="Submit">
     </div>
   </form>
-  <form method="post" enctype="multipart/form-data">
+  <form method="post" action="/cancel" id="form-cancel" enctype="multipart/form-data">
     <input type="submit" value="Cancel">
   </form>
+  <br>
+  <h4>Worker Availability</h4>
+  <table id='table-worker'>
+    <tr>
+      <th>worker id</th>
+      <th>availability</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td>loading...</td>
+    </tr>
+  </table>
   <div id='output'>
     {% if output %}
     <h4>Output:</h4>
@@ -67,7 +79,7 @@
     integrity="sha512-HT3t3u7HfQ7USbSZa0Tk5caEnUfO8s58OWqMBwm96xaZAbA17rpnXXHDefR8ixVmSSVssbOv3W3OMh6mNX/XuQ=="
     crossorigin="anonymous"></script>
   <script>
-    var LANG = ['python', 'text/x-java']
+    var LANG = ['python', 'text/x-java'];
     var editor = CodeMirror.fromTextArea(document.getElementById('code'), {
       lineNumbers: true,
       textWrapping: true,
@@ -76,10 +88,17 @@
       matchBrackets: true,
     });
     function changeMode(lang) {
+      var warning_java = $("#warning-java");
+      if (lang === "text/x-java") {
+        warning_java.text("if you're using java, please make sure the primary class name is 'Main'");
+        warning_java.attr('style', 'color:red;');
+      } else {
+        warning_java.empty();
+      }
       editor.setOption('mode', lang);
     }
     editor.setSize(null, 700);
-    $('#form-code').submit(function(e){
+    $('#form-code').submit(function (e) {
       e.preventDefault();
       data = $('form').serializeArray();
       json_data = {}
@@ -93,7 +112,7 @@
         url: '/',
         data: JSON.stringify(json_data),
         contentType: 'application/json;charset=UTF-8',
-        success: function(data) {
+        success: function (data) {
           console.log(data);
           $('#code').text(data.code);
           editor.setOption('mode', LANG[data.language - 1]);
@@ -106,11 +125,49 @@
           $('#output').append(output_node);
           $("#worker-status").text('Finished')
         },
-        error: function(err) {
+        error: function (err) {
           console.log(err);
         }
       })
-    })
+    });
+    function get_avail() {
+      $.ajax({
+        type: "GET",
+        url: '/available',
+        success: function (data) {
+          console.log(data);
+          var table_worker = $('#table-worker')
+          table_worker.empty()
+
+          var table_tr_1 = $('<tr>')
+          var header_1 = $('<th>')
+          header_1.text('worker id')
+
+          var header_2 = $('<th>')
+          header_2.text('availability')
+
+          table_tr_1.append(header_1)
+          table_tr_1.append(header_2)
+
+          var table_tr_2 = $('<tr>')
+          var header_2 = $('<th>')
+          header_2.text(1)
+
+          var header_4 = $('<th>')
+          header_4.text(data)
+
+          table_tr_2.append(header_2)
+          table_tr_2.append(header_4)
+
+          table_worker.append(table_tr_1)
+          table_worker.append(table_tr_2)
+        },
+        error: function (err) {
+          console.log(err);
+        }
+      })
+    };
+    get_avail();
   </script>
 </body>
 

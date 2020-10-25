@@ -8,8 +8,10 @@ server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 server.bind(utils.WORKER_SOCK)
 
 STATUS = 1 # Default FINISHED
+AVAILABLE = 1 # Default ACTIVE
 
 def handle_client(conn, addr):
+    global STATUS, AVAILABLE
     print('Connected by', addr)
 
     header = conn.recv(utils.BUFF_SIZE).decode()
@@ -24,16 +26,19 @@ def handle_client(conn, addr):
         elif flag == utils.GET_STATUS:
             utils.send(conn, STATUS)
 
-        elif flag == utils.UPDATE_STATUS:
-            global STATUS
+        elif flag == utils.GET_AVAIL:
             # Ngubah STATUS
-            utils.send(conn, "Berhasil Diubah")
+            utils.send(conn, AVAILABLE)
 
         elif flag == utils.EXEC_FLAG:
             # cek semua worker apakah available
             code = utils.receive_data(conn)
+            STATUS = 2
+            AVAILABLE = 3
             output = code_runner.run(code[1:].encode(), utils.LANGUAGE_LOOKUP[int(code[0])])
-            conn.sendall((str(output) + utils.EOF).encode())
+            STATUS = 1
+            utils.send(conn, output)
+            AVAILABLE = 1
 
     conn.close()
     print('Disconnected from', addr)

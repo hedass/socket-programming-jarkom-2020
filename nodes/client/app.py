@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
-from utils import EXEC_FLAG, MASTER_SOCK, TOKEN, EOF, LANGUAGE
+from flask import json
 
+import utils
 import io
 import socket
 
@@ -8,32 +9,36 @@ app = Flask(__name__)
 app.debug = True
 
 def kirim_master(code, lang):
-    data = io.BytesIO((str(lang) + code).encode())
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(MASTER_SOCK)
-        s.send((TOKEN + EXEC_FLAG).encode())
-        while 1:
-            chunk = data.read(1024)
-            if not chunk:
-                break
-            s.send(chunk)
-        s.send(EOF.encode())
-        output = ''
-        while 1:
-            reply = s.recv(1024).decode()
-            if not reply:
-                break
-            output += reply
+        s.connect(utils.MASTER_SOCK)
+        utils.send_data(s, lang + code, utils.EXEC_FLAG)
+        output = utils.receive_data(s)
 
     return output
 
+
 def _cancel():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect(MASTER_SOCK)
+        s.connect(utils.MASTER_SOCK)
         s.send(1)
 
         output = s.recv(1024).decode()
         return output
+
+
+def _status():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(utils.MASTER_SOCK)
+
+
+def _available():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(utils.MASTER_SOCK)
+        utils.send_flag(s, utils.GET_AVAIL)
+        output = utils.receive_data(s)
+        avail = utils.AVAILABILITY[int(output) - 1]
+        return avail
+
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -41,9 +46,9 @@ def index():
         data = request.get_json()
         code = data.get('code').replace('\r\n', '\n')
         language = data.get('language')
-        if (language not in LANGUAGE):
+        if (language not in utils.LANGUAGE):
             return render_template('index.html', code=code, language=language)
-        language = LANGUAGE[language]
+        language = utils.LANGUAGE[language]
         output = kirim_master(code, language)
         context = {
             'code': code,
@@ -54,11 +59,25 @@ def index():
         # return render_template('index.html', **context)
     return render_template('index.html')
 
+
+@app.route('/available', methods=['GET'])
+def available():
+    output = _available()
+    return jsonify(output)
+
+
+@app.route('/status', methods=['GET'])
+def status():
+    output = _status()
+    return jsonify(output)
+
+
 @app.route('/cancel', methods=['POST'])
 def cancel():
     output = _cancel()
     json_dict = {'cancel': 1}
     return jsonify(json_dict)
+
 
 if __name__ == "__main__":
   app.run(host='0.0.0.0', port=8000)
