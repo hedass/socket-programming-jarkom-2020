@@ -13,6 +13,7 @@ class Request(ExtendedEnum):
     GET_JOB_STATUS = 2
     EXECUTE_JOB = 3
     CANCEL_JOB = 4
+    GET_OUTPUT = 5
 
 
 class WorkerStatus(ExtendedEnum):
@@ -50,7 +51,7 @@ def send(sock, data):
 
 
 def send_flag(sock, flag):
-    sock.sendall((TOKEN + str(flag)).encode())
+    sock.sendall((TOKEN + str(flag.value)).encode())
 
 
 def send_data(sock, data, flag):

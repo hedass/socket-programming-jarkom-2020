@@ -2,6 +2,7 @@ from socket import SOCK_STREAM
 import threading
 import socket
 import utils
+from utils import WORKER_SOCK
 
 
 def handle_client(conn, addr):
@@ -19,14 +20,14 @@ def handle_client(conn, addr):
         elif flag == utils.Request.GET_JOB_STATUS:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_flag(s, flag.value)
+                utils.send_flag(s, flag)
                 output = utils.receive_data(s)
                 utils.send(conn, output)
 
         elif flag == utils.Request.GET_WORKER_STATUS:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_flag(s, flag.value)
+                utils.send_flag(s, flag)
                 output = utils.receive_data(s)
                 utils.send(conn, output)
 
@@ -35,9 +36,18 @@ def handle_client(conn, addr):
             # TODO cek semua worker apakah available
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, code, flag.value)
+                utils.send_data(s, code, flag)
                 output = utils.receive_data(s)
                 utils.send(conn, output)
+
+        elif flag == utils.Request.GET_OUTPUT:
+            job_id = utils.receive_data(conn)
+
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(WORKER_SOCK)
+                utils.send_data(s, job_id, flag)
+                job_id = utils.receive_data(s)
+                utils.send(conn, job_id)
 
     conn.close()
     print('Disconnected from', addr)

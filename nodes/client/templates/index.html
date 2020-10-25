@@ -104,35 +104,39 @@
       $("#avail-1").text('BUSY');
       $('#output').empty();
       $("#warning-java").empty();
+      var div_form_cancel = $("#div-form-cancel")
+      div_form_cancel.attr("style", "display:none;");
       $.ajax({
         type: 'POST',
         url: '/',
         data: JSON.stringify(json_data),
         contentType: 'application/json;charset=UTF-8',
         success: function (data) {
-          if (Number.isInteger(parseInt(data.output))) {
-            var warning_java = $("#warning-java");
-            warning_java.attr('style', 'color:red;')
-            warning_java.text("WORKER IS BUSY");
-          }
-          $('#code').text(data.code);
-          editor.setOption('mode', LANG[data.language - 1]);
+          var job_id = data.job_id;
+          console.log(job_id);
+          // if (Number.isInteger(parseInt(data.output))) {
+          //   var warning_java = $("#warning-java");
+          //   warning_java.attr('style', 'color:red;')
+          //   warning_java.text("WORKER IS BUSY");
+          // }
+          // $('#code').text(data.code);
+          // editor.setOption('mode', LANG[data.language - 1]);
 
-          var output = JSON.parse(data.output)
-          console.log(output);
+          // var output = JSON.parse(data.output)
+          // console.log(output);
 
-          for (prop in output) {
-            var temp_p = $('<p>');
-            temp_p.text(prop);
+          // for (prop in output) {
+          //   var temp_p = $('<p>');
+          //   temp_p.text(prop);
 
-            var temp_textarea = $('<textarea>');
-            temp_textarea.attr('rows', 10);
-            temp_textarea.attr('cols', 70);
-            temp_textarea.text(output[prop]);
+          //   var temp_textarea = $('<textarea>');
+          //   temp_textarea.attr('rows', 10);
+          //   temp_textarea.attr('cols', 70);
+          //   temp_textarea.text(output[prop]);
 
-            $("#output").append(temp_p);
-            $("#output").append(temp_textarea);
-          }
+          //   $("#output").append(temp_p);
+          //   $("#output").append(temp_textarea);
+          // }
         },
         error: function (err) {
           console.log(err);
@@ -144,6 +148,7 @@
         type: "GET",
         url: '/available',
         success: function (data) {
+          data = data.STATUS
           console.log(data);
           var table_worker = $('#table-worker')
           table_worker.empty()

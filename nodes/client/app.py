@@ -13,27 +13,18 @@ app.debug = True
 def kirim_master(code, lang):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(utils.MASTER_SOCK)
-        utils.send_data(s, f"{lang}{code}", utils.Request.EXECUTE_JOB.value)
-        output = utils.receive_data(s)
-        try:
-            int(output)
-            return output
-        except ValueError as e:
-            pass
-        output = literal_eval(output)
-        output['stdout'] = output['stdout'].decode()
-        output['stderr'] = output['stderr'].decode()
-        output = dumps(output)
+        utils.send_data(s, f"{lang}{code}", utils.Request.EXECUTE_JOB)
+        job_id = utils.receive_data(s)
 
-    return output
+    return job_id
 
 
-def _cancel():
+def _cancel(job_id):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(utils.MASTER_SOCK)
-        s.send(1)
+        utils.send_data(s, job_id, utils.Request(4))
 
-        output = s.recv(1024).decode()
+        output = utils.receive_data(s)
         return output
 
 
@@ -45,10 +36,28 @@ def _status():
 def _available():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(utils.MASTER_SOCK)
-        utils.send_flag(s, utils.Request.GET_WORKER_STATUS.value)
+        utils.send_flag(s, utils.Request(1))
         output = utils.receive_data(s)
         avail = utils.WorkerStatus(int(output)).name
         return avail
+
+
+def _get_output(job_id):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(utils.MASTER_SOCK)
+        utils.send_data(s, job_id, utils.Request(5))
+        output = utils.receive_data(s)
+        print(output)
+        try:
+            int(output)
+            return output
+        except ValueError as e:
+            pass
+        output = literal_eval(output)
+        output['stdout'] = output['stdout'].decode()
+        output['stderr'] = output['stderr'].decode()
+        output = dumps(output)
+        return output
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -60,16 +69,23 @@ def index():
         if (language not in utils.LanguageCode.list()):
             return jsonify({'error': 'Language unsupported'})
         language = utils.LanguageCode.list().index(language) + 1
-        output = kirim_master(code, language)
-        context = {'code': code, 'output': output, 'language': language}
-        return jsonify(context)
+        job_id = kirim_master(code, language)
+        json_output = {'job_id': job_id}
+        return jsonify(json_output)
     return render_template('index.html')
+
+
+@app.route('/output/<job_id>')
+def get_output(job_id):
+    output = _get_output(job_id)
+    return jsonify(output)
 
 
 @app.route('/available', methods=['GET'])
 def available():
     output = _available()
-    return jsonify(output)
+    json_output = {'STATUS': output}
+    return jsonify(json_output)
 
 
 @app.route('/status', methods=['GET'])
@@ -78,8 +94,8 @@ def status():
     return jsonify(output)
 
 
-@app.route('/cancel', methods=['POST'])
-def cancel():
-    output = _cancel()
-    json_dict = {'cancel': 1}
+@app.route('/cancel/<job_id>', methods=['POST'])
+def cancel(job_id):
+    output = _cancel(job_id)
+    json_dict = {'message': output}
     return jsonify(json_dict)
