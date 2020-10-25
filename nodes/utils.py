@@ -20,16 +20,15 @@ class Request(ExtendedEnum):
 
 
 class WorkerStatus(ExtendedEnum):
-    ACTIVE = 1
+    FREE = 1
+    RUNNING = 2
     DEAD = 2
-    BUSY = 3
 
 
 class JobStatus(ExtendedEnum):
     FINISHED = 1
-    RUNNING = 2
+    WAITING = 2
     FAILED = 3
-    CANCELLED = 4
 
 
 class LanguageCode(ExtendedEnum):
@@ -53,7 +52,7 @@ TOKEN = os.environ.get("TOKEN", "agA6D11")
 EOF = '@%[>!eof!<]%@'
 HEADER_SIZE = len(TOKEN) + 1
 
-SCHEDULER_ALGORITHM = SchedulerAlgorithm.LCFS
+SCHEDULER_ALGORITHM = SchedulerAlgorithm.FCFS
 
 
 def send(sock, data):
@@ -90,10 +89,10 @@ def get_job(deque):
 
 def schedule_jobs(jobs, jobs_queue):
     while True:
-        time.sleep(2)
         try:
             job_id = get_job(jobs_queue)
             jobs[job_id].start()
+            jobs[job_id].join()
         except:
             continue
 

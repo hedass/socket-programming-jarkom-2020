@@ -11,18 +11,17 @@ jobs_output = dict()
 # deque is thread-safe
 jobs_queue = deque()
 
-STATUS = utils.JobStatus.FINISHED
-AVAILABLE = utils.WorkerStatus.ACTIVE
-
 
 def run_code(job_id, code):
+    global jobs_output
+    print(code)
     jobs_output[job_id] = code_runner.run(
         code[1:].encode(),
         utils.LanguageCode.list()[int(code[0]) - 1])
 
 
 def handle_connection(conn, addr):
-    global STATUS, AVAILABLE
+    global jobs, jobs_queue
 
     print('Connected by', addr)
     header = conn.recv(utils.HEADER_SIZE).decode()
@@ -35,10 +34,12 @@ def handle_connection(conn, addr):
             utils.send(conn, "FATAL: Authentication Error")
 
         elif flag == utils.Request.GET_JOB_STATUS:
-            utils.send(conn, STATUS.value)
+            # TODO
+            pass
 
         elif flag == utils.Request.GET_WORKER_STATUS:
-            utils.send(conn, AVAILABLE.value)
+            # TODO
+            pass
 
         elif flag == utils.Request.EXECUTE_JOB:
             text = utils.receive_data(conn)
