@@ -4,27 +4,25 @@ import utils
 from worker import code_runner
 from uuid import uuid4
 import multiprocessing
+import pickle
 
+STATUS = multiprocessing.Manager().Value("STATUS", utils.JobStatus.FINISHED)
+AVAILABLE = multiprocessing.Manager().Value("AVAILABLE", utils.JobStatus.FINISHED)
 
-STATUS = utils.JobStatus.FINISHED
-AVAILABLE = utils.WorkerStatus.ACTIVE
-
-DICT_JOB = multiprocessing.Manager().dict()
+DICT_JOB = dict()
 DICT_OUTPUT = multiprocessing.Manager().dict()
 
 def do_it(job_uuid, code):
-    global STATUS, AVAILABLE
+    global STATUS, AVAILABLE, DICT_OUTPUT
     output = code_runner.run(
                 code[1:].encode(),
                 utils.LanguageCode.list()[int(code[0]) - 1])
     DICT_OUTPUT[job_uuid] = output
-    print(DICT_OUTPUT)
-    del DICT_JOB[job_uuid]
-    STATUS = utils.JobStatus.FINISHED
-    AVAILABLE = utils.WorkerStatus.ACTIVE
+    STATUS.value = utils.JobStatus.FINISHED
+    AVAILABLE.value = utils.WorkerStatus.ACTIVE
 
 def handle_client(conn, addr):
-    global STATUS, AVAILABLE, DICT_JOB, DICT_OUTPUT
+    global STATUS, AVAILABLE, DICT_OUTPUT, DICT_OUTPUT
     print('Connected by', addr)
 
     header = conn.recv(utils.HEADER_SIZE).decode()
@@ -37,26 +35,27 @@ def handle_client(conn, addr):
             utils.send(conn, "FATAL: Authentication Error")
 
         elif flag == utils.Request.GET_JOB_STATUS:
-            utils.send(conn, STATUS.value)
+            utils.send(conn, STATUS.value.value)
 
         elif flag == utils.Request.GET_WORKER_STATUS:
-            utils.send(conn, AVAILABLE.value)
+            utils.send(conn, AVAILABLE.value.value)
 
         elif flag == utils.Request.EXECUTE_JOB:
-            if (AVAILABLE != utils.WorkerStatus.ACTIVE):
-                utils.send(conn, AVAILABLE.value)
+            if (AVAILABLE.value.value != utils.WorkerStatus.ACTIVE.value):
+                utils.send(conn, AVAILABLE.value.value)
                 conn.close()
                 print('Disconnected from', addr)
                 return
 
             job_uuid = str(uuid4())
+            utils.send(conn, job_uuid)
             code = utils.receive_data(conn)
-            STATUS = utils.JobStatus.RUNNING
-            AVAILABLE = utils.WorkerStatus.BUSY
+            STATUS.value = utils.JobStatus.RUNNING
+            AVAILABLE.value = utils.WorkerStatus.BUSY
             process = multiprocessing.Process(target=do_it, args=(job_uuid, code))
             DICT_JOB[job_uuid] = process
             process.start()
-            utils.send(conn, job_uuid)
+            process.join()
 
         elif flag == utils.Request.CANCEL_JOB:
             job_id = utils.receive_data(conn)
@@ -69,8 +68,6 @@ def handle_client(conn, addr):
 
         elif flag == utils.Request.GET_OUTPUT:
             job_id = utils.receive_data(conn)
-            print(job_id)
-            print(DICT_OUTPUT)
             if (DICT_JOB.get(job_id) == None):
                 utils.send(conn, -1)
                 conn.close()
@@ -80,6 +77,7 @@ def handle_client(conn, addr):
             output = DICT_OUTPUT[job_id]
             utils.send(conn, output)
             del DICT_OUTPUT[job_id]
+            del DICT_JOB[job_id]
 
     conn.close()
     print('Disconnected from', addr)
