@@ -1,12 +1,30 @@
-from socket import SOCK_STREAM
-import threading
 import socket
+import threading
+import uuid
+from collections import deque
+
 import utils
 
+# uuid4 is random so should be thread-safe on different keys
+jobs = dict()
+jobs_output = dict()
 
-def handle_client(conn, addr):
+# deque is thread-safe
+jobs_queue = deque()
+
+
+def forward_code(job_id, code, flag):
+    global jobs_output
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.connect(utils.WORKER_SOCK)
+        utils.send_data(s, job_id + code, flag.value)
+
+
+def handle_connection(conn, addr):
+    global jobs, jobs_queue
+
     print('Connected by', addr)
-
     header = conn.recv(utils.HEADER_SIZE).decode()
 
     if header:
@@ -32,28 +50,18 @@ def handle_client(conn, addr):
 
         elif flag == utils.Request.EXECUTE_JOB:
             code = utils.receive_data(conn)
-            # TODO cek semua worker apakah available
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, code, flag.value)
-                output = utils.receive_data(s)
-                utils.send(conn, output)
+            job_id = str(uuid.uuid4())
+            thread = threading.Thread(target=forward_code,
+                                      args=(job_id, code, flag))
+            jobs[job_id] = thread
+            jobs_queue.append(job_id)
+
+        elif flag == utils.Request.GET_OUTPUT:
+            # TODO
+            pass
 
     conn.close()
     print('Disconnected from', addr)
 
 
-def start():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(utils.MASTER_SOCK)
-        s.listen(1)
-        print('Server is listening on', utils.MASTER_SOCK)
-
-        while True:
-            conn, addr = s.accept()
-            thread = threading.Thread(target=handle_client, args=(conn, addr))
-            thread.start()
-
-
-start()
+utils.start(utils.MASTER_SOCK, jobs, jobs_queue, handle_connection)

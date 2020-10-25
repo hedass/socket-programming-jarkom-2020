@@ -1,16 +1,30 @@
-import socket
 import threading
+from collections import deque
+
 import utils
 from worker import code_runner
+
+# uuid4 is random so should be thread-safe on different keys
+jobs = dict()
+jobs_output = dict()
+
+# deque is thread-safe
+jobs_queue = deque()
 
 STATUS = utils.JobStatus.FINISHED
 AVAILABLE = utils.WorkerStatus.ACTIVE
 
 
-def handle_client(conn, addr):
-    global STATUS, AVAILABLE
-    print('Connected by', addr)
+def run_code(job_id, code):
+    jobs_output[job_id] = code_runner.run(
+        code[1:].encode(),
+        utils.LanguageCode.list()[int(code[0]) - 1])
 
+
+def handle_connection(conn, addr):
+    global STATUS, AVAILABLE
+
+    print('Connected by', addr)
     header = conn.recv(utils.HEADER_SIZE).decode()
 
     if header:
@@ -27,35 +41,19 @@ def handle_client(conn, addr):
             utils.send(conn, AVAILABLE.value)
 
         elif flag == utils.Request.EXECUTE_JOB:
-            if (AVAILABLE != utils.WorkerStatus.ACTIVE):
-                utils.send(conn, AVAILABLE.value)
-                conn.close()
-                return
-            code = utils.receive_data(conn)
-            STATUS = utils.JobStatus.RUNNING
-            AVAILABLE = utils.WorkerStatus.BUSY
-            output = code_runner.run(
-                code[1:].encode(),
-                utils.LanguageCode.list()[int(code[0]) - 1])
-            STATUS = utils.JobStatus.FINISHED
-            utils.send(conn, output)
-            AVAILABLE = utils.WorkerStatus.ACTIVE
+            text = utils.receive_data(conn)
+            job_id = text[:36]
+            code = text[36:]
+            thread = threading.Thread(target=run_code, args=(job_id, code))
+            jobs[job_id] = thread
+            jobs_queue.append(job_id)
+
+        elif flag == utils.Request.GET_OUTPUT:
+            # TODO
+            pass
 
     conn.close()
     print('Disconnected from', addr)
 
 
-def start():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        s.bind(utils.WORKER_SOCK)
-        s.listen(1)
-        print('Server is listening on', utils.WORKER_SOCK)
-
-        while True:
-            conn, addr = s.accept()
-            thread = threading.Thread(target=handle_client, args=(conn, addr))
-            thread.start()
-
-
-start()
+utils.start(utils.WORKER_SOCK, jobs, jobs_queue, handle_connection)

@@ -1,5 +1,4 @@
 from flask import Flask, render_template, request, jsonify
-from flask import json
 from ast import literal_eval
 from json import dumps
 
@@ -10,7 +9,7 @@ app = Flask(__name__)
 app.debug = True
 
 
-def kirim_master(code, lang):
+def send_code(code, lang):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.connect(utils.MASTER_SOCK)
         utils.send_data(s, f"{lang}{code}", utils.Request.EXECUTE_JOB.value)
@@ -60,7 +59,7 @@ def index():
         if (language not in utils.LanguageCode.list()):
             return jsonify({'error': 'Language unsupported'})
         language = utils.LanguageCode.list().index(language) + 1
-        output = kirim_master(code, language)
+        output = send_code(code, language)
         context = {'code': code, 'output': output, 'language': language}
         return jsonify(context)
     return render_template('index.html')
