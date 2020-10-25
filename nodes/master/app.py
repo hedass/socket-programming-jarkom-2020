@@ -3,59 +3,57 @@ import threading
 import socket
 import utils
 
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-server.bind(utils.MASTER_SOCK)
-
-STATUS = 1
 
 def handle_client(conn, addr):
     print('Connected by', addr)
 
-    header = conn.recv(utils.BUFF_SIZE).decode()
+    header = conn.recv(utils.HEADER_SIZE).decode()
 
     if header:
-        token = header[:-2]
-        flag = header[-2:]
+        token = header[:-1]
+        flag = utils.Request(int(header[-1:]))
 
         if token != utils.TOKEN:
-            conn.sendall("FATAL: Authentication Error".encode())
+            utils.send(conn, "FATAL: Authentication Error")
 
-        elif flag == utils.GET_STATUS:
+        elif flag == utils.Request.GET_JOB_STATUS:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_flag(s, flag)
-                output = utils.receive_data(s)
-                utils.send(conn, output)
-        
-        elif flag == utils.GET_AVAIL:
-            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                s.connect(utils.WORKER_SOCK)
-                utils.send_flag(s, flag)
+                utils.send_flag(s, flag.value)
                 output = utils.receive_data(s)
                 utils.send(conn, output)
 
-        elif flag == utils.EXEC_FLAG:
+        elif flag == utils.Request.GET_WORKER_STATUS:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(utils.WORKER_SOCK)
+                utils.send_flag(s, flag.value)
+                output = utils.receive_data(s)
+                utils.send(conn, output)
+
+        elif flag == utils.Request.EXECUTE_JOB:
             code = utils.receive_data(conn)
-            # cek semua worker apakah available
+            # TODO cek semua worker apakah available
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, code, flag)
+                utils.send_data(s, code, flag.value)
                 output = utils.receive_data(s)
                 utils.send(conn, output)
 
     conn.close()
     print('Disconnected from', addr)
 
-def start():
-    server.listen(1)
-    print('Server is listening on', utils.MASTER_SOCK)
 
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
+def start():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        s.bind(utils.MASTER_SOCK)
+        s.listen(1)
+        print('Server is listening on', utils.MASTER_SOCK)
+
+        while True:
+            conn, addr = s.accept()
+            thread = threading.Thread(target=handle_client, args=(conn, addr))
+            thread.start()
 
 
 start()
-server.close()

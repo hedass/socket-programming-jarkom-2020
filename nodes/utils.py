@@ -1,4 +1,37 @@
 import os
+from enum import Enum
+
+
+class ExtendedEnum(Enum):
+    @classmethod
+    def list(cls):
+        return list(map(lambda c: c.value, cls))
+
+
+class Request(ExtendedEnum):
+    GET_WORKER_STATUS = 1
+    GET_JOB_STATUS = 2
+    EXECUTE_JOB = 3
+    CANCEL_JOB = 4
+
+
+class WorkerStatus(ExtendedEnum):
+    ACTIVE = 1
+    DEAD = 2
+    BUSY = 3
+
+
+class JobStatus(ExtendedEnum):
+    FINISHED = 1
+    RUNNING = 2
+    FAILED = 3
+    CANCELLED = 4
+
+
+class LanguageCode(ExtendedEnum):
+    python = 'python'
+    java = 'text/x-java'
+
 
 MASTER_HOST = '127.0.0.1'
 WORKER_HOST = '0.0.0.0'
@@ -8,44 +41,22 @@ MASTER_SOCK = (MASTER_HOST, MASTER_PORT)
 WORKER_SOCK = (WORKER_HOST, WORKER_PORT)
 
 TOKEN = os.environ.get("TOKEN", "agA6D11")
-EOF   = '@%[>!eof!<]%@'
+EOF = '@%[>!eof!<]%@'
+HEADER_SIZE = len(TOKEN) + 1
 
-BUFF_SIZE  = len(TOKEN)+2
-
-UPDATE_STATUS   = "US"
-GET_STATUS      = "GS"
-REQUEST_CANCEL  = "RC"
-GET_AVAIL       = "GA"
-EXEC_FLAG       = "EX"
-
-STATUS = [
-    'FINISHED',
-    'RUNNING',
-    'FAILED',
-    'CANCELED',
-]
-
-AVAILABILITY = [
-    'ACTIVE',
-    'DEAD',
-    'BUSY',
-]
-
-LANGUAGE = {
-    'python': 1,
-    'text/x-java': 2,
-}
-LANGUAGE_LOOKUP = {v: k for k, v in LANGUAGE.items()}
 
 def send(sock, data):
     sock.sendall((str(data) + EOF).encode())
 
+
 def send_flag(sock, flag):
-    sock.sendall((TOKEN + flag).encode())
+    sock.sendall((TOKEN + str(flag)).encode())
+
 
 def send_data(sock, data, flag):
-    send_flag(sock,flag)
-    send(sock,data)
+    send_flag(sock, flag)
+    send(sock, data)
+
 
 def receive_data(conn):
     data = ''
