@@ -23,9 +23,12 @@ LANGUAGE = {
     'text/x-java': 2,
 }
 
+def send(sock, data):
+    sock.sendall((data + EOF).encode())
+
 def send_data(sock, data, flag):
     sock.sendall((TOKEN + flag).encode())
-    sock.sendall((data + EOF).encode())
+    send(sock, data)
 
 def receive_data(conn):
     data = ''
