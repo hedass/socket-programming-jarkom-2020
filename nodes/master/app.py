@@ -1,6 +1,6 @@
 import socket
-from utils import WORKER_ADDR
+from utils import WORKER_SOCK as SOCK
 
 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    s.connect(WORKER_ADDR)
-    print('Connected to', WORKER_ADDR)
+    s.connect(SOCK)
+    print('Connected to', SOCK)
