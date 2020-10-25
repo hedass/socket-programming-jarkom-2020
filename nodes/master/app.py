@@ -1,3 +1,4 @@
+from socket import SOCK_STREAM
 import threading
 import socket
 import utils
@@ -19,18 +20,39 @@ def handle_client(conn, addr):
 
         if token != utils.TOKEN:
             conn.sendall("FATAL: Authentication Error".encode())
+
+        elif flag == utils.GET_STATUS:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(utils.WORKER_SOCK)
+                utils.send_data(s, "", flag)
+                output = utils.receive_data(s)
+                conn.send(output.encode())
+        
+        elif flag == utils.UPDATE_STATUS:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(utils.WORKER_SOCK)
+                utils.send_data(s, "", flag)
+                output = utils.receive_data(s)
+                conn.send_data(output.encode())
+
+        elif flag == utils.GET_AVAIL:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect(utils.WORKER_SOCK)
+                utils.send_data(s, "", flag)
+                output = utils.receive_data()
+                conn.send(output.encode())
+
         elif flag == utils.EXEC_FLAG:
             code = utils.receive_data(conn)
             # cek semua worker apakah available
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect(utils.WORKER_SOCK)
-                utils.send_data(s, code, utils.EXEC_FLAG)
+                utils.send_data(s, code, flag)
                 output = utils.receive_data(s)
                 conn.sendall(output.encode())
 
     conn.close()
     print('Disconnected from', addr)
-
 
 def start():
     server.listen(1)
