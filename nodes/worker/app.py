@@ -1,4 +1,5 @@
 import socket
+from client.app import available
 import utils
 import threading
 from worker import code_runner
@@ -31,6 +32,11 @@ def handle_client(conn, addr):
             utils.send(conn, AVAILABLE)
 
         elif flag == utils.EXEC_FLAG:
+            if (AVAILABLE != 1):
+                utils.send(conn, AVAILABLE)
+                conn.close()
+                return
+            # cek apakah dia sibuk
             # cek semua worker apakah available
             code = utils.receive_data(conn)
             STATUS = 2

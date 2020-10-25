@@ -14,6 +14,11 @@ def kirim_master(code, lang):
         s.connect(utils.MASTER_SOCK)
         utils.send_data(s, f"{lang}{code}", utils.EXEC_FLAG)
         output = utils.receive_data(s)
+        try:
+            int(output)
+            return output
+        except ValueError as e:
+            pass
         output = literal_eval(output)
         output['stdout'] = output['stdout'].decode()
         output['stderr'] = output['stderr'].decode()

@@ -109,19 +109,26 @@
         json_data[element.name] = element.value
       });
       $('#worker-status').text('Running')
+      $("#avail-1").text('BUSY');
+      $('#output').empty();
+      $("#warning-java").empty();
       $.ajax({
         type: 'POST',
         url: '/',
         data: JSON.stringify(json_data),
         contentType: 'application/json;charset=UTF-8',
         success: function (data) {
+          if (Number.isInteger(parseInt(data.output))) {
+            var warning_java = $("#warning-java");
+            warning_java.attr('style', 'color:red;')
+            warning_java.text("WORKER IS BUSY");
+          }
           $('#code').text(data.code);
           editor.setOption('mode', LANG[data.language - 1]);
-          
+
           var output = JSON.parse(data.output)
           console.log(output);
-          
-          $('#output').empty();
+
           for (prop in output) {
             var temp_p = $('<p>');
             temp_p.text(prop);
@@ -164,6 +171,7 @@
           header_2.text(1)
 
           var header_4 = $('<th>')
+          header_4.attr('id', 'avail-1')
           header_4.text(data)
 
           table_tr_2.append(header_2)
