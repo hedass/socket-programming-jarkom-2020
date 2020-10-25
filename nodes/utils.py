@@ -22,6 +22,7 @@ LANGUAGE = {
     'python': 1,
     'text/x-java': 2,
 }
+LANGUAGE_LOOKUP = {v: k for k, v in LANGUAGE.items()}
 
 def send(sock, data):
     sock.sendall((data + EOF).encode())

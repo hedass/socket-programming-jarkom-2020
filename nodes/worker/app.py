@@ -1,7 +1,7 @@
 import socket
 import utils
-from time import sleep
 import threading
+from worker import code_runner
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -32,8 +32,8 @@ def handle_client(conn, addr):
         elif flag == utils.EXEC_FLAG:
             # cek semua worker apakah available
             code = utils.receive_data(conn)
-            sleep(5)
-            utils.send(conn, f"kodingan anda bagus {utils.EOF}")
+            output = code_runner.run(code[1:].encode(), utils.LANGUAGE_LOOKUP[int(code[0])])
+            conn.sendall((str(output) + utils.EOF).encode())
 
     conn.close()
     print('Disconnected from', addr)
